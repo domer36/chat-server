@@ -21,26 +21,46 @@ const PORT = process.env.PORT || 3000;
 
 
 const users = []
-const socketByUser = []
+let socketByUser = []
+
 
 io.on('connection', (socket) => {
+
+    const FindUser = cb => {
+        const [found] = socketByUser.filter( item => item.id === socket.id )
+        if( found ){
+            socketByUser = socketByUser.filter( item => item.id !== socket.id)
+            cb(found)
+        }
+    }
+
+
     socket.on('add_user', user => {
-        console.log('user add...')
         users.push( user )
         socketByUser.push({id: socket.id, user})
         io.emit('users', users)
+        io.emit('connected', socket.id)
     })
 
     socket.on('message', msg => {
-        io.emit('message', msg)
+        const res = {...msg, id: socket.id}
+        io.emit('message', res)
     })
 
     socket.on('disconnect', ()=>{
-        const [found] = socketByUser.filter( item => item.id === socket.id )
-        if( found ){
+        FindUser( (found)=> {
             const idx = users.indexOf(found.user)
             if(idx > -1 ) users.splice( idx, 1)
-        }
+        })
+        io.emit('users', users)
+    })
+
+    socket.on('change_username', data => {
+        FindUser( found => {
+            socketByUser.push({id: socket.id, user: data.username})
+            const idx = users.indexOf(found.user)
+            if(idx > -1 ) users[idx]= data.username
+        })
         io.emit('users', users)
     })
 })
