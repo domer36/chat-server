@@ -5,6 +5,8 @@ const http = require('http')
 const socketIO = require('socket.io')
 
 const app = express()
+const server = http.Server(app)
+const io = socketIO(server);
 
 app.use(
     cors({
@@ -13,19 +15,11 @@ app.use(
     })
 )
 
-const server = http.Server(app)
-const io = socketIO(server);
-
-const PORT = process.env.PORT || 3000;
-
-
-
 const users = []
 let socketByUser = []
 
-
 io.on('connection', (socket) => {
-
+    
     const FindUser = cb => {
         const [found] = socketByUser.filter( item => item.id === socket.id )
         if( found ){
@@ -54,7 +48,7 @@ io.on('connection', (socket) => {
         })
         io.emit('users', users)
     })
-
+    
     socket.on('change_username', data => {
         FindUser( found => {
             socketByUser.push({id: socket.id, user: data.username})
@@ -67,4 +61,5 @@ io.on('connection', (socket) => {
 
 app.use('/getTotalUsers', (_, res) => res.status(200).json({total: users.length}))
 
+const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => console.log(`started on port: ${PORT}`))
