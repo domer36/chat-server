@@ -1,5 +1,6 @@
 require('dotenv').config()
 const express = require('express')
+const mongoose = require('mongoose')
 const cors = require('cors')
 const http = require('http')
 const socketIO = require('socket.io')
@@ -7,6 +8,10 @@ const socketIO = require('socket.io')
 const app = express()
 const server = http.Server(app)
 const io = socketIO(server);
+
+mongoose.connect(process.env.DB, { useNewUrlParser: true, useUnifiedTopology: true  })
+.then( x => console.log('DB Ready', x.connections[0].name))
+.catch( err => console.log(err))
 
 app.use(
     cors({
