@@ -7,7 +7,9 @@ const socketIO = require('socket.io')
 
 const app = express()
 const server = http.Server(app)
-const io = socketIO(server);
+const io = socketIO(server)
+
+const Chat = require('./models/ChatModel')
 
 mongoose.connect(process.env.DB, { useNewUrlParser: true, useUnifiedTopology: true  })
 .then( x => console.log('DB Ready', x.connections[0].name))
@@ -43,7 +45,10 @@ io.on('connection', (socket) => {
 
     socket.on('message', msg => {
         const res = {...msg, id: socket.id}
-        io.emit('message', res)
+        Chat.create( res )
+        .then( () => io.emit('message', res) )
+        .catch( err => console.log(err))
+        
     })
 
     socket.on('disconnect', ()=>{
